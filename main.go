@@ -90,6 +90,6 @@ func main() {
 	lines.Sort()
 
 	for _, l := range lines {
-		fmt.Println(string(l))
+		fmt.Printf("%s\n", l)
 	}
 }
