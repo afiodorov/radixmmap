@@ -11,37 +11,54 @@ import (
 	"github.com/twotwotwo/sorts"
 )
 
-type Lines []mm.MMap
+type Slice struct {
+	start int
+	end   int
+}
+
+type Lines struct {
+	data   []byte
+	slices []Slice
+}
+
+func (l Lines) Line(i int) []byte {
+	return l.data[l.slices[i].start:l.slices[i].end]
+}
 
 func (s Lines) Less(i, j int) bool {
 	limI, limJ := 20, 20
 
-	if len(s[i]) < limI {
-		limI = len(s[i])
+	a := s.Line(i)
+	b := s.Line(j)
+
+	if len(a) < limI {
+		limI = len(a)
 	}
 
-	if len(s[j]) < limJ {
-		limJ = len(s[j])
+	if len(b) < limJ {
+		limJ = len(b)
 	}
 
-	return bytes.Compare(s[i][:limI], s[j][:limJ]) == -1
+	return bytes.Compare(a[:limI], b[:limJ]) == -1
 }
 
 func (s Lines) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
+	s.slices[i], s.slices[j] = s.slices[j], s.slices[i]
 }
 
 func (s Lines) Len() int {
-	return len(s)
+	return len(s.slices)
 }
 
 func (s Lines) Key(i int) []byte {
 	l := 20
-	if len(s[i]) < l {
-		l = len(s[i])
+	a := s.Line(i)
+
+	if len(a) < l {
+		l = len(a)
 	}
 
-	return s[i][:l]
+	return a[:l]
 }
 
 func (s Lines) Sort() { sorts.ByBytes(s) }
@@ -72,24 +89,24 @@ func main() {
 		}
 	}()
 
-	var lines Lines
+	lines := Lines{data: m, slices: make([]Slice, 0)}
 
 	start := 0
 
 	for i := 0; i < len(m); i++ {
 		if m[i] == byte(10) {
-			lines = append(lines, m[start:i])
+			lines.slices = append(lines.slices, Slice{start: start, end: i})
 			start = i + 1
 		}
 	}
 
 	if len(m) > start {
-		lines = append(lines, m[start:len(m)])
+		lines.slices = append(lines.slices, Slice{start: start, end: len(m)})
 	}
 
 	lines.Sort()
 
-	for _, l := range lines {
-		fmt.Printf("%s\n", l)
+	for _, l := range lines.slices {
+		fmt.Printf("%s\n", lines.data[l.start:l.end])
 	}
 }
