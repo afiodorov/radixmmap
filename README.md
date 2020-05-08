@@ -22,10 +22,20 @@ First we load file into memory & then use [radix sort](radix) to sort by first 1
 
 # Why?
 
-The idea is to sort big files in memory as fast as possible with as little overhead as possible.
+The idea is to sort big files as fast as possible with as little overhead as possible.
 
 I find that [memory mapped files](mmap) allow for optimal loading of the file:
 this way OS allocates just as much memory as needed.
 
+Prior to this utility I have been using [sort](sort) command found in shells:
+
+
+```.bash
+LC_ALL=C sort --parallel=16 -t, -k1 -S100% /tmp/test
+```
+
+but found it quite memory hungry.
+
 [mmap]: https://en.wikipedia.org/wiki/Memory-mapped_file
 [radix]: https://en.wikipedia.org/wiki/Radix_sort
+[sort]: https://en.wikipedia.org/wiki/Sort_(Unix)
