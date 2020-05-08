@@ -38,7 +38,7 @@ but found it quite memory hungry.
 
 # Main idea behind the implementation
 
-This implementation uses as little RAM as possible without compromising on performance as much.
+This implementation uses as little RAM as possible without compromising on performance too much.
 
 Additionally to loading file in RAM, we need 16 bytes per line to remember
 where the sort prefix starts and where it ends. For a file with 1.2 billion
