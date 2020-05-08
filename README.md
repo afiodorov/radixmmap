@@ -60,8 +60,10 @@ sys     1m7.665s
 # Credits
 
 Big thanks to [edsrzf][edsrzf] and [twotwotwo][twotwotwo] for providing
-underlying implementations.
+underlying implementations for mmap & radix sort respectively.
 
 [mmap]: https://en.wikipedia.org/wiki/Memory-mapped_file
 [radix]: https://en.wikipedia.org/wiki/Radix_sort
 [sort]: https://en.wikipedia.org/wiki/Sort_(Unix)
+[edsrzf]: https://github.com/edsrzf/mmap-go
+[twotwotwo]: https://github.com/twotwotwo/sorts
