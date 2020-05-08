@@ -1,6 +1,6 @@
 # radixmmap: sort massive files by prefix in memory
 
-In the example we will sort a file in chronological order, where first 19 bytes of each line are assumed to be RFC3339 date.
+In this example we will sort a file in chronological order, where first 19 bytes of each line are assumed to be RFC3339 date.
 
 Example
 
