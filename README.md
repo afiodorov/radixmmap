@@ -36,6 +36,18 @@ LC_ALL=C sort --parallel=16 -t, -k1 -S100% /tmp/test
 
 but found it quite memory hungry.
 
+# Main idea behind the implementation
+
+This implementation uses as little RAM as possible without compromising on performance as much.
+
+Additionally to loading file in RAM, we need 16 bytes per line to remember
+where the sort prefix starts and where it ends. For a file with 1.2 billion
+lines this results in 19.2 GB overhead.
+
+# Benchmark
+
+Currently sorts 44GB file using 63.2GB RAM, 16 cores in 25 minutes.
+
 [mmap]: https://en.wikipedia.org/wiki/Memory-mapped_file
 [radix]: https://en.wikipedia.org/wiki/Radix_sort
 [sort]: https://en.wikipedia.org/wiki/Sort_(Unix)
