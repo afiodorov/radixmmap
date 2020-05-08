@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"log"
@@ -136,16 +137,20 @@ func main() {
 		}
 	}()
 
+	w := bufio.NewWriterSize(dst, 16*1024*1024)
+
 	for _, l := range lines.slices {
-		_, err := dst.Write(lines.data[l.start:l.end])
+		_, err := w.Write(lines.data[l.start:l.end])
 		if err != nil {
 			log.Fatalf("%v\n", err)
 		}
 
-		_, err = dst.Write([]byte{10})
-
-		if err != nil {
+		if err := w.WriteByte(byte(10)); err != nil {
 			log.Fatalf("%v\n", err)
 		}
+	}
+
+	if err := w.Flush(); err != nil {
+		log.Fatalf("%v\n", err)
 	}
 }
