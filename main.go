@@ -6,10 +6,7 @@ import (
 	"flag"
 	"io"
 	"log"
-	"net/http"
 	"os"
-
-	_ "net/http/pprof"
 
 	mm "github.com/edsrzf/mmap-go"
 	"github.com/twotwotwo/sorts"
@@ -72,7 +69,7 @@ var (
 )
 
 func main() {
-	defaultBufSize := 32 * 1024 * 1024
+	defaultBufSize := 16 * 1024 * 1024
 	newLine := byte(10)
 
 	sourceFile := flag.String("s", "", "file to sort")
@@ -81,10 +78,6 @@ func main() {
 		"size of write buffer: determines how often data is flushed to disk")
 
 	flag.Parse()
-
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
 
 	src, err := os.Open(*sourceFile)
 	if err != nil {
@@ -148,7 +141,7 @@ func main() {
 
 	defer func() {
 		if err := w.Flush(); err != nil {
-			log.Fatalf("couldn't flush file: %v\n", err)
+			log.Fatalf("couldn't flush writer: %v\n", err)
 		}
 	}()
 
