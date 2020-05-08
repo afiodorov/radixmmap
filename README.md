@@ -46,7 +46,7 @@ lines this results in 19.2 GB overhead.
 
 # Benchmark
 
-Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19m37s minutes:
+Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19 minutes 37 seconds:
 
 
 ```.bash
