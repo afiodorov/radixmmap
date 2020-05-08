@@ -41,7 +41,8 @@ but found it quite memory hungry.
 This implementation uses as little RAM as possible without compromising on performance too much.
 
 Additionally to loading file in RAM, we need 16 bytes per line to remember
-where the sort prefix starts and where it ends. For a file with 1.2 billion
+where the sort prefix starts and where it ends (8 bytes to remember start
+position and 8 bytes to remember end position). For a file with 1.2 billion
 lines this results in 19.2 GB overhead.
 
 # Benchmark
