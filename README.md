@@ -50,7 +50,7 @@ Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19 minutes 37 seconds:
 
 
 ```.bash
-go build && time ./radixmmap -s /data/2020-05-07-btc-daily/joined.csv -d /data/tmp/sorted.csv
+go build && time ./radixmmap -s bigfile.csv -d sorted.csv
 real    19m37.992s
 user    96m27.955s
 sys     1m7.665s
