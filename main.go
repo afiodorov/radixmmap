@@ -16,8 +16,8 @@ import (
 )
 
 type Slice struct {
-	start uint64
-	end   uint64
+	start int
+	end   int
 }
 
 type Lines struct {
@@ -104,7 +104,7 @@ func main() {
 
 	numLines := 1
 
-	for i := uint64(0); i < uint64(len(m)); i++ {
+	for i := 0; i < len(m); i++ {
 		if m[i] == newLine {
 			numLines++
 		}
@@ -112,17 +112,17 @@ func main() {
 
 	lines := Lines{data: m, slices: make([]Slice, 0, numLines)}
 
-	start := uint64(0)
+	start := 0
 
-	for i := uint64(0); i < uint64(len(m)); i++ {
+	for i := 0; i < len(m); i++ {
 		if m[i] == newLine {
 			lines.slices = append(lines.slices, Slice{start: start, end: i})
 			start = i + 1
 		}
 	}
 
-	if uint64(len(m)) > start {
-		lines.slices = append(lines.slices, Slice{start: start, end: uint64(len(m))})
+	if int(len(m)) > start {
+		lines.slices = append(lines.slices, Slice{start: start, end: len(m)})
 	}
 
 	lines.Sort()
