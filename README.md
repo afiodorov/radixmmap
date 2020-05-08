@@ -66,6 +66,8 @@ user    71m34.478s
 sys     3m17.947s
 ```
 
+The file has ~1.22 billion lines.
+
 # Credits
 
 Big thanks to [edsrzf][edsrzf] and [twotwotwo][twotwotwo] for providing
