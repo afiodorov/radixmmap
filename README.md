@@ -1,6 +1,6 @@
 # radixmmap: sort massive files by prefix in memory
 
-Mmap radix sort a file in a chronological order, where first 19 bytes of each line are assumed to be RFC3339 date.
+In the example we will sort a file in chronological order, where first 19 bytes of each line are assumed to be RFC3339 date.
 
 Example
 
@@ -18,16 +18,16 @@ Example
 
 # How?
 
-First we load file into memory & then use [radix sort](radix) to sort by first 19 bytes of each line.
+First we load file into memory & then use [radix sort][radix] to sort by first 19 bytes of each line.
 
 # Why?
 
 The idea is to sort big files as fast as possible with as little overhead as possible.
 
-I find that [memory mapped files](mmap) allow for optimal loading of the file:
+I find that [memory mapped files][mmap] allow for optimal loading of the file:
 this way OS allocates just as much memory as needed.
 
-Prior to this utility I have been using [sort](sort) command found in shells:
+Prior to this utility I have been using [sort][sort] command found in shells:
 
 
 ```.bash
