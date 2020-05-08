@@ -3,17 +3,19 @@ package main
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"log"
+	"net/http"
 	"os"
+
+	_ "net/http/pprof"
 
 	mm "github.com/edsrzf/mmap-go"
 	"github.com/twotwotwo/sorts"
 )
 
 type Slice struct {
-	start int
-	end   int
+	start uint64
+	end   uint64
 }
 
 type Lines struct {
@@ -26,7 +28,7 @@ func (l Lines) Line(i int) []byte {
 }
 
 func (s Lines) Less(i, j int) bool {
-	limI, limJ := 20, 20
+	limI, limJ := 19, 19
 
 	a := s.Line(i)
 	b := s.Line(j)
@@ -51,7 +53,7 @@ func (s Lines) Len() int {
 }
 
 func (s Lines) Key(i int) []byte {
-	l := 20
+	l := 19
 	a := s.Line(i)
 
 	if len(a) < l {
@@ -64,10 +66,15 @@ func (s Lines) Key(i int) []byte {
 func (s Lines) Sort() { sorts.ByBytes(s) }
 
 func main() {
-	fileName := flag.String("s", "", "file to sort")
+	sourceFile := flag.String("s", "", "file to sort")
+	destFile := flag.String("d", "", "file to write result to")
 	flag.Parse()
 
-	file, err := os.Open(*fileName)
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
+
+	file, err := os.Open(*sourceFile)
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
@@ -89,24 +96,56 @@ func main() {
 		}
 	}()
 
-	lines := Lines{data: m, slices: make([]Slice, 0)}
+	numLines := 1
 
-	start := 0
+	for i := uint64(0); i < uint64(len(m)); i++ {
+		if m[i] == byte(10) {
+			numLines++
+		}
+	}
 
-	for i := 0; i < len(m); i++ {
+	lines := Lines{data: m, slices: make([]Slice, 0, numLines)}
+
+	start := uint64(0)
+
+	for i := uint64(0); i < uint64(len(m)); i++ {
 		if m[i] == byte(10) {
 			lines.slices = append(lines.slices, Slice{start: start, end: i})
 			start = i + 1
 		}
 	}
 
-	if len(m) > start {
-		lines.slices = append(lines.slices, Slice{start: start, end: len(m)})
+	if uint64(len(m)) > start {
+		lines.slices = append(lines.slices, Slice{start: start, end: uint64(len(m))})
 	}
 
 	lines.Sort()
 
+	dst, err := os.Create(*destFile)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+
+	defer func() {
+		if err := dst.Sync(); err != nil {
+			log.Fatalf("%v\n", err)
+		}
+
+		if err := dst.Close(); err != nil {
+			log.Fatalf("%v\n", err)
+		}
+	}()
+
 	for _, l := range lines.slices {
-		fmt.Printf("%s\n", lines.data[l.start:l.end])
+		_, err := dst.Write(lines.data[l.start:l.end])
+		if err != nil {
+			log.Fatalf("%v\n", err)
+		}
+
+		_, err = dst.Write([]byte{10})
+
+		if err != nil {
+			log.Fatalf("%v\n", err)
+		}
 	}
 }
