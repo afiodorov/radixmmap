@@ -57,6 +57,16 @@ user    96m27.955s
 sys     1m7.665s
 ```
 
+In comparison `sort` takes 29 minutes and 51 seconds, and uses >80GB of RAM:
+
+```.bash
+> time LC_ALL=C sort --parallel=16 -t, -k1 -S100% -o sorted.csv bigfile.csv
+
+real    29m51.346s
+user    71m34.478s
+sys     3m17.947s
+```
+
 # Credits
 
 Big thanks to [edsrzf][edsrzf] and [twotwotwo][twotwotwo] for providing
