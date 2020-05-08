@@ -46,7 +46,15 @@ lines this results in 19.2 GB overhead.
 
 # Benchmark
 
-Currently sorts 44GB file using 63.2GB RAM, 16 cores in 25 minutes.
+Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19m37s minutes:
+
+
+```.bash
+go build && time ./radixmmap -s /data/2020-05-07-btc-daily/joined.csv -d /data/tmp/sorted.csv
+real    19m37.992s
+user    96m27.955s
+sys     1m7.665s
+```
 
 [mmap]: https://en.wikipedia.org/wiki/Memory-mapped_file
 [radix]: https://en.wikipedia.org/wiki/Radix_sort
