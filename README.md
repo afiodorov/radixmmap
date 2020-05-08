@@ -51,7 +51,7 @@ Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19 minutes 37 seconds:
 
 
 ```.bash
-go build && time ./radixmmap -s bigfile.csv -d sorted.csv
+> go build && time ./radixmmap -s bigfile.csv -d sorted.csv
 real    19m37.992s
 user    96m27.955s
 sys     1m7.665s
@@ -61,7 +61,6 @@ In comparison `sort` takes 29 minutes and 51 seconds, and uses >80GB of RAM:
 
 ```.bash
 > time LC_ALL=C sort --parallel=16 -t, -k1 -S100% -o sorted.csv bigfile.csv
-
 real    29m51.346s
 user    71m34.478s
 sys     3m17.947s
