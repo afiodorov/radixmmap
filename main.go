@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,8 +16,8 @@ import (
 )
 
 type Slice struct {
-	start int
-	end   int
+	start uint64
+	end   uint64
 }
 
 type Lines struct {
@@ -29,7 +30,7 @@ func (l Lines) Line(i int) []byte {
 }
 
 func (s Lines) Less(i, j int) bool {
-	limI, limJ := 19, 19
+	limI, limJ := *numChars, *numChars
 
 	a := s.Line(i)
 	b := s.Line(j)
@@ -54,7 +55,7 @@ func (s Lines) Len() int {
 }
 
 func (s Lines) Key(i int) []byte {
-	l := 19
+	l := *numChars
 	a := s.Line(i)
 
 	if len(a) < l {
@@ -66,91 +67,99 @@ func (s Lines) Key(i int) []byte {
 
 func (s Lines) Sort() { sorts.ByBytes(s) }
 
+var (
+	numChars = flag.Int("n", 19, "number of first bytes to use when comparing lines")
+)
+
 func main() {
+	defaultBufSize := 32 * 1024 * 1024
+	newLine := byte(10)
+
 	sourceFile := flag.String("s", "", "file to sort")
-	destFile := flag.String("d", "", "file to write result to")
+	destFile := flag.String("d", "-", "file to write result to")
+	writeBufferSize := flag.Int("write-buffer-size", defaultBufSize,
+		"size of write buffer: determines how often data is flushed to disk")
+
 	flag.Parse()
 
 	go func() {
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 
-	file, err := os.Open(*sourceFile)
+	src, err := os.Open(*sourceFile)
 	if err != nil {
-		log.Fatalf("%v\n", err)
+		log.Fatalf("couldn't open file %v: %v\n", *sourceFile, err)
 	}
 
 	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatalf("%v\n", err)
+		if err := src.Close(); err != nil {
+			log.Fatalf("couldn't close file %v: %v\n", *sourceFile, err)
 		}
 	}()
 
-	m, err := mm.Map(file, mm.RDONLY, 0)
+	m, err := mm.Map(src, mm.RDONLY, 0)
 	if err != nil {
-		log.Fatalf("%v\n", err)
+		log.Fatalf("couldn't mmap file: %v\n", err)
 	}
-
-	defer func() {
-		if err := m.Flush(); err != nil {
-			log.Fatalf("%v\n", err)
-		}
-	}()
 
 	numLines := 1
 
-	for i := 0; i < len(m); i++ {
-		if m[i] == byte(10) {
+	for i := uint64(0); i < uint64(len(m)); i++ {
+		if m[i] == newLine {
 			numLines++
 		}
 	}
 
 	lines := Lines{data: m, slices: make([]Slice, 0, numLines)}
 
-	start := 0
+	start := uint64(0)
 
-	for i := 0; i < len(m); i++ {
-		if m[i] == byte(10) {
+	for i := uint64(0); i < uint64(len(m)); i++ {
+		if m[i] == newLine {
 			lines.slices = append(lines.slices, Slice{start: start, end: i})
 			start = i + 1
 		}
 	}
 
-	if len(m) > start {
-		lines.slices = append(lines.slices, Slice{start: start, end: len(m)})
+	if uint64(len(m)) > start {
+		lines.slices = append(lines.slices, Slice{start: start, end: uint64(len(m))})
 	}
 
 	lines.Sort()
 
-	dst, err := os.Create(*destFile)
-	if err != nil {
-		log.Fatalf("%v\n", err)
+	var dst io.Writer = os.Stdout
+
+	if *destFile != "-" {
+		dstFile, err := os.Create(*destFile)
+		if err != nil {
+			log.Fatalf("couldn't create file %v: %v\n", *destFile, err)
+		}
+
+		defer func() {
+			if err := dstFile.Close(); err != nil {
+				log.Fatalf("couldn't close file %v, %v\n", *destFile, err)
+			}
+		}()
+
+		dst = dstFile
 	}
 
-	defer func() {
-		if err := dst.Sync(); err != nil {
-			log.Fatalf("%v\n", err)
-		}
+	w := bufio.NewWriterSize(dst, *writeBufferSize)
 
-		if err := dst.Close(); err != nil {
-			log.Fatalf("%v\n", err)
+	defer func() {
+		if err := w.Flush(); err != nil {
+			log.Fatalf("couldn't flush file: %v\n", err)
 		}
 	}()
-
-	w := bufio.NewWriterSize(dst, 16*1024*1024)
 
 	for _, l := range lines.slices {
 		_, err := w.Write(lines.data[l.start:l.end])
 		if err != nil {
-			log.Fatalf("%v\n", err)
+			log.Fatalf("couldn't write line to file: %v\n", err)
 		}
 
-		if err := w.WriteByte(byte(10)); err != nil {
-			log.Fatalf("%v\n", err)
+		if err := w.WriteByte(newLine); err != nil {
+			log.Fatalf("couldn't write new line to file: %v\n", err)
 		}
-	}
-
-	if err := w.Flush(); err != nil {
-		log.Fatalf("%v\n", err)
 	}
 }
