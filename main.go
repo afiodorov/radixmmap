@@ -114,7 +114,7 @@ func main() {
 		}
 	}
 
-	if int(len(m)) > start {
+	if len(m) > start {
 		lines.slices = append(lines.slices, Slice{start: start, end: len(m)})
 	}
 
