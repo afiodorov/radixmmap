@@ -88,7 +88,7 @@ func main() {
 	}
 
 	if *verbose {
-		log.Printf("Created memory-mapped file in %v. Splitting lines...\n", time.Since(now))
+		log.Printf("Created memory-mapped file in %v. Splitting into lines...\n", time.Since(now))
 		now = time.Now()
 	}
 
