@@ -142,6 +142,10 @@ func main() {
 		if err := w.Flush(); err != nil {
 			log.Fatalf("couldn't flush writer: %v\n", err)
 		}
+
+		if *verbose {
+			log.Printf("Wrote in %v. Closing...\n", time.Since(now))
+		}
 	}()
 
 	for _, l := range lines {
@@ -153,9 +157,5 @@ func main() {
 		if err := w.WriteByte('\n'); err != nil {
 			log.Fatalf("couldn't write new line to file: %v\n", err)
 		}
-	}
-
-	if *verbose {
-		log.Printf("Wrote in %v. Closing...\n", time.Since(now))
 	}
 }
