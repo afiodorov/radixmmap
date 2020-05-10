@@ -79,17 +79,17 @@ func main() {
 		log.Fatalf("couldn't mmap file: %v\n", err)
 	}
 
-	if *verbose {
-		log.Printf("Created memory-mapped file in %v. Splitting lines...\n", time.Since(now))
-		now = time.Now()
-	}
-
 	numLines := 1
 
 	for i := 0; i < len(m); i++ {
 		if m[i] == '\n' {
 			numLines++
 		}
+	}
+
+	if *verbose {
+		log.Printf("Created memory-mapped file in %v. Splitting lines...\n", time.Since(now))
+		now = time.Now()
 	}
 
 	lines := make(Lines, 0, numLines)
