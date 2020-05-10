@@ -73,7 +73,7 @@ func main() {
 		log.Println("Creating memory-mapped file...")
 	}
 
-	m, err := mm.Map(src, mm.RDONLY, 0)
+	data, err := mm.Map(src, mm.RDONLY, 0)
 
 	if err != nil {
 		log.Fatalf("couldn't mmap file: %v\n", err)
@@ -81,8 +81,8 @@ func main() {
 
 	numLines := 1
 
-	for i := 0; i < len(m); i++ {
-		if m[i] == '\n' {
+	for i := 0; i < len(data); i++ {
+		if data[i] == '\n' {
 			numLines++
 		}
 	}
@@ -94,17 +94,17 @@ func main() {
 
 	lines := make(Lines, 0, numLines)
 
-	start := 0
+	lineStart := 0
 
-	for i := 0; i < len(m); i++ {
-		if m[i] == '\n' {
-			lines = append(lines, sixb.BtS(m[start:i]))
-			start = i + 1
+	for i := 0; i < len(data); i++ {
+		if data[i] == '\n' {
+			lines = append(lines, sixb.BtS(data[lineStart:i+1]))
+			lineStart = i + 1
 		}
 	}
 
-	if len(m) > start {
-		lines = append(lines, sixb.BtS(m[start:]))
+	if len(data) > lineStart {
+		lines = append(lines, sixb.BtS(data[lineStart:])+"\n")
 	}
 
 	if *verbose {
@@ -152,10 +152,6 @@ func main() {
 		_, err := w.Write(sixb.StB(l))
 		if err != nil {
 			log.Fatalf("couldn't write line to file: %v\n", err)
-		}
-
-		if err := w.WriteByte('\n'); err != nil {
-			log.Fatalf("couldn't write new line to file: %v\n", err)
 		}
 	}
 }
