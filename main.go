@@ -3,112 +3,111 @@ package main
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
-	"strings"
+	"runtime"
+	"sync"
 	"time"
 
-	mm "github.com/edsrzf/mmap-go"
 	"github.com/jfcg/sixb"
-	"github.com/twotwotwo/sorts"
 )
-
-type Lines []string
-
-func (s Lines) Less(i, j int) bool {
-	return strings.Compare(s.Key(i), s.Key(j)) == -1
-}
-
-func (s Lines) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s Lines) Len() int {
-	return len(s)
-}
-
-func (s Lines) Key(i int) string {
-	l := *numChars
-	a := s[i]
-
-	if len(a) < l {
-		l = len(a)
-	}
-
-	return a[:l]
-}
-
-func (s Lines) Sort() { sorts.ByString(s) }
 
 var (
 	numChars = flag.Int("n", 19, "number of first bytes to use when comparing lines")
 )
 
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [OPTION]... FILE...\n", os.Args[0])
+		fmt.Fprintln(os.Stderr, "Options:")
+		flag.PrintDefaults()
+	}
+
 	defaultBufSize := 16 * 1024 * 1024
 
-	sourceFile := flag.String("s", "", "file to sort")
 	destFile := flag.String("d", "-", "file to write result to")
 	writeBufferSize := flag.Int("write-buffer-size", defaultBufSize,
 		"size of write buffer: determines how often data is flushed to disk")
 	verbose := flag.Bool("v", false, "verbosity")
+	skipHeader := flag.Bool("skip-header", false, "skip header of each file")
 
 	flag.Parse()
 
-	src, err := os.Open(*sourceFile)
-	if err != nil {
-		log.Fatalf("couldn't open file %v: %v\n", *sourceFile, err)
+	fileNames := flag.Args()
+	if len(fileNames) < 1 {
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	defer func() {
-		if err := src.Close(); err != nil {
-			log.Fatalf("couldn't close file %v: %v\n", *sourceFile, err)
-		}
-	}()
+	fileMetas := make([]FileMeta, len(fileNames))
+	maxGoroutines := runtime.NumCPU()
+	guard := make(chan struct{}, maxGoroutines)
+	var wg sync.WaitGroup
 
 	now := time.Now()
-
 	if *verbose {
-		log.Println("Creating memory-mapped file...")
+		log.Printf("Creating %v memory-mapped files...\n", len(fileNames))
 	}
-
-	data, err := mm.Map(src, mm.RDONLY, 0)
-
-	if err != nil {
-		log.Fatalf("couldn't mmap file: %v\n", err)
-	}
-
-	numLines := 1
-
-	for i := 0; i < len(data); i++ {
-		if data[i] == '\n' {
-			numLines++
+	for i, file := range fileNames {
+		guard <- struct{}{}
+		src, err := os.Open(file)
+		if err != nil {
+			log.Fatalf("couldn't open file %v: %v\n", file, err)
 		}
+
+		wg.Add(1)
+		go func(src *os.File, i int) {
+			defer wg.Done()
+			memoryMapFile(src, fileMetas, i, *skipHeader)
+			<-guard
+		}(src, i)
+
+		defer func(src *os.File) {
+			if err := src.Close(); err != nil {
+				log.Fatalf("couldn't close file %v: %v\n", src.Name(), err)
+			}
+		}(src)
 	}
 
 	if *verbose {
-		log.Printf("Created memory-mapped file in %v. Splitting into lines...\n", time.Since(now))
+		log.Printf("Created memory-mapped files in %v. Allocating memory to hold lines...\n", time.Since(now))
 		now = time.Now()
 	}
 
-	lines := make(Lines, 0, numLines)
+	wg.Wait()
 
-	lineStart := 0
-
-	for i := 0; i < len(data); i++ {
-		if data[i] == '\n' {
-			lines = append(lines, sixb.BtS(data[lineStart:i+1]))
-			lineStart = i + 1
-		}
+	var numLines int
+	for _, fileMeta := range fileMetas {
+		numLines += fileMeta.NumLines
 	}
 
-	if len(data) > lineStart {
-		lines = append(lines, sixb.BtS(data[lineStart:])+"\n")
-	}
+	lines := make(Lines, numLines)
 
 	if *verbose {
-		log.Printf("Splitted file into lines in %v. Sorting...\n", time.Since(now))
+		log.Printf("Allocated memory for %v lines in %v. Splitting into lines...\n", numLines, time.Since(now))
+		now = time.Now()
+	}
+
+	var numLinesBefore int
+	for _, fileMeta := range fileMetas {
+		guard <- struct{}{}
+
+		wg.Add(1)
+		go func(content []byte, numLinesBefore int) {
+			defer wg.Done()
+			lineSplitter(lines, content, numLinesBefore)
+			<-guard
+		}(fileMeta.Content, numLinesBefore)
+
+		numLinesBefore += fileMeta.NumLines
+	}
+
+	wg.Wait()
+
+	if *verbose {
+		log.Printf("Splitted files into lines in %v. Sorting...\n", time.Since(now))
 		now = time.Now()
 	}
 
