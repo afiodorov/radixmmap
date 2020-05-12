@@ -10,7 +10,7 @@ Example
 2009-01-10T15:30:47Z,abc
 2009-01-10T15:30:45Z,def
 
-> ./radixmmap -s /tmp/test
+> ./radixmmap /tmp/test
 2009-01-10T15:30:45Z,def
 2009-01-10T15:30:47Z,abc
 2011-01-10T15:30:45Z,bla
@@ -51,7 +51,7 @@ Currently sorts 44GB file using 63.2GB RAM, 16 cores in 19 minutes 37 seconds:
 
 
 ```.bash
-> go build && time ./radixmmap -s bigfile.csv -d sorted.csv
+> go build && time ./radixmmap -d sorted.csv bigfile.csv
 real    19m37.992s
 user    96m27.955s
 sys     1m7.665s
