@@ -72,7 +72,7 @@ func main() {
 	}
 
 	if *verbose {
-		log.Printf("Created memory-mapped files in %v. Allocating memory to hold lines ...\n", time.Since(now))
+		log.Printf("Created memory-mapped files in %v. Allocating memory to hold lines...\n", time.Since(now))
 		now = time.Now()
 	}
 
