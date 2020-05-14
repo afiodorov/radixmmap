@@ -19,7 +19,7 @@ Example 1:
 Example 2, multiple csv files with header:
 
 ```.bash
-cat /tmp/a /tmp/b
+> cat /tmp/a /tmp/b
 date,string
 2009-01-10T15:30:45Z,def
 2009-01-10T15:30:47Z,abc
