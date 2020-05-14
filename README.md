@@ -2,7 +2,7 @@
 
 In this example we will sort a file in chronological order, where first 19 bytes of each line are assumed to be RFC3339 date.
 
-Example
+Example 1:
 
 ```.bash
 > cat /tmp/test
@@ -14,6 +14,28 @@ Example
 2009-01-10T15:30:45Z,def
 2009-01-10T15:30:47Z,abc
 2011-01-10T15:30:45Z,bla
+```
+
+Example 2, multiple csv files with header:
+
+```.bash
+cat /tmp/a /tmp/b
+date,string
+2009-01-10T15:30:45Z,def
+2009-01-10T15:30:47Z,abc
+2011-01-10T15:30:45Z,bla
+date,string
+2020-01-10T15:30:45Z,key
+2005-01-10T15:30:47Z,lkj
+1999-01-10T15:30:45Z,zxc
+
+> ./radixmmap -skip-header /tmp/a /tmp/b
+1999-01-10T15:30:45Z,zxc
+2005-01-10T15:30:47Z,lkj
+2009-01-10T15:30:45Z,def
+2009-01-10T15:30:47Z,abc
+2011-01-10T15:30:45Z,bla
+2020-01-10T15:30:45Z,key
 ```
 
 # How?
